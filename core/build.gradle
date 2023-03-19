@@ -1,0 +1,30 @@
+plugins {
+    id 'scala'
+    id 'com.google.gms.google-services'
+}
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+compileScala {
+    scalaCompileOptions.optimize = true
+    scalaCompileOptions.additionalParameters = ['-target:jvm-1.8',  '-feature',
+                                                '-language:postfixOps', '-language:implicitConversions']
+
+}
+
+[compileJava, compileTestJava, compileScala]*.options*.encoding = 'UTF-8'
+
+//sourceSets.main.java.srcDirs = [ "src/" ]
+sourceSets.main.scala.srcDirs = [ "src/" ]
+
+eclipse.project.name = appName + "-core"
+
+dependencies {
+    implementation 'org.scala-lang:scala-library:2.13.8'
+    implementation("org.typelevel:cats-core_2.13:2.8.0")
+    implementation 'com.google.firebase:firebase-admin:9.1.1'
+
+}
+
+apply plugin: 'com.google.gms.google-services'
