@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Random
 
-// Things kinda stolen from scaloi
+// Things kinda stolen from scaloi  xxx
 package object dearth {
   def d(die: Int): Int = Random.nextInt(die) + 1
   def d(nOd: Int, die: Int): Int = {
