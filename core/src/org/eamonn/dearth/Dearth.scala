@@ -12,10 +12,10 @@ import com.badlogic.gdx.graphics.g3d.attributes.{ColorAttribute, TextureAttribut
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
 import com.badlogic.gdx.graphics.g3d.{Environment, Material, Model, ModelBatch, ModelInstance}
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
-import com.badlogic.gdx.math.{Matrix4, Vector3}
+import com.badlogic.gdx.math.{Matrix4, Vector2, Vector3}
 import com.badlogic.gdx.utils.ScreenUtils
 import com.badlogic.gdx.{ApplicationAdapter, Gdx, Input, InputProcessor}
-import org.eamonn.dearth.Dearth.Weapon
+import org.eamonn.dearth.Dearth.{Fingerer, Hand, Square, Weapon}
 import org.eamonn.dearth.scenes.Home
 import org.eamonn.dearth.util.{GarbageCan, TextureWrapper}
 
@@ -31,8 +31,25 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   var lZ = 0f
   var mx = 0
   var my = 0
-  var playerJump= 0f
-  var playerAlt = 0f
+  var wallLocs = List[Vec2](Vec2(0, 0), Vec2(1, 0)
+    , Vec2(3, 0)
+    , Vec2(4, 0)
+    , Vec2(4, 1)
+    , Vec2(4, 2)
+    , Vec2(4, 3)
+    , Vec2(4, 4)
+    , Vec2(4, 5)
+    , Vec2(1, 5)
+    , Vec2(0, 5)
+    , Vec2(-1, 5)
+    , Vec2(-1, 4)
+    , Vec2(-1, 3)
+    , Vec2(-1, 2)
+    , Vec2(-1, 1)
+    , Vec2(-1, 0)
+    , Vec2(2, 5)
+    , Vec2(3, 5)
+  )
   val texCoords: Array[Float] =
     Array(
       0.0f, 0.0f,
@@ -44,8 +61,10 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   var camera: PerspectiveCamera = _
   var modelBatch: ModelBatch = _
   var modelBuilder: ModelBuilder = _
+  var isMiddleFinger = false
   var box: Model = _
   var modelInstance: ModelInstance = _
+  var switchedFinger = false
   var environment: Environment = _
 
 
@@ -59,7 +78,7 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     camera.far =  300f
     modelBatch = new ModelBatch()
     modelBuilder =new ModelBuilder()
-    box = modelBuilder.createBox(2f, 2f, 2f,
+    box = modelBuilder.createBox(1f, 2f, 1f,
       new Material(TextureAttribute.createDiffuse(TextureWrapper.load("WallTexture.png"))),
       VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates    )
     modelInstance = new ModelInstance(box, 0, 0, 0)
@@ -68,6 +87,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f))
     Gdx.input.setInputProcessor(this)
     Dearth.Weapon = TextureWrapper.load("Dagger.png")
+    Dearth.Square = TextureWrapper.load("Square.png")
+    Dearth.Hand = TextureWrapper.load("fingerless.png")
+    Dearth.Fingerer = TextureWrapper.load("hand.png")
     //    Dearth.sound = Dearth.loadSound("triangle.mp3")
     //Text.loadFonts()
   }
@@ -80,11 +102,20 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     camera.update()
     modelInstance = new ModelInstance(box, lX, lY, lZ)
     modelBatch.begin(camera)
-    modelBatch.render(modelInstance , environment)
+    wallLocs.foreach(wall => {
 
+    modelBatch.render(new ModelInstance(box, wall.x, lY, wall.y) , environment)
+  })
     modelBatch.end()
     batch.begin()
-    batch.draw(Weapon, Gdx.graphics.getWidth/2, 0f, Gdx.graphics.getWidth/2, Gdx.graphics.getWidth/2)
+    batch.draw(Square, 0f, 0f, Gdx.graphics.getWidth/8, Gdx.graphics.getWidth/2)
+    batch.draw(Weapon, Gdx.graphics.getWidth*5/8, 0f, Gdx.graphics.getWidth/4, Gdx.graphics.getWidth/2)
+    batch.draw(Square, Gdx.graphics.getWidth*7/8, 0f, Gdx.graphics.getWidth/8, Gdx.graphics.getWidth/2)
+    if(isMiddleFinger){
+      batch.draw(Fingerer, Gdx.graphics.getWidth/8, 0f, Gdx.graphics.getWidth/4, Gdx.graphics.getWidth/4)
+    } else {
+      batch.draw(Hand, Gdx.graphics.getWidth/ 8, 0f, Gdx.graphics.getWidth / 4, Gdx.graphics.getWidth / 4)
+    }
     batch.end()
   }
 
@@ -96,6 +127,14 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     } else {
       lZ = 0f
     }
+
+    if(keysPressed.contains(Keys.Q) && !switchedFinger){
+      isMiddleFinger = !isMiddleFinger
+      switchedFinger = true
+    }
+    if(!keysPressed.contains(Keys.Q)){
+      switchedFinger = false
+    }
     var sideways = camera.direction.cpy()
     sideways.rotate(Vector3.Y, 90f)
     if (keysPressed.contains(Keys.A)) {
@@ -105,19 +144,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     } else {
       lX = 0f
     }
-    if(keysPressed.contains(Keys.SPACE) && playerAlt <= 0f){
-      playerJump = .4f
-    }
-    playerJump *= .9f
-    playerAlt += playerJump
-    if(playerAlt > 0f){
-      playerAlt -= .1f
-    }
-    if(playerAlt < 0f){
-      playerAlt = 0f
-    }
+
     camera.position.mulAdd(camera.direction, lZ)
-    camera.position.set(camera.position.x, playerAlt, camera.position.z)
+    camera.position.set(camera.position.x, 0, camera.position.z)
     camera.position.mulAdd(sideways, lX)
   }
 
@@ -170,6 +199,8 @@ object Dearth {
   var sound: Sound = _
   var Square: TextureWrapper = _
   var Weapon: TextureWrapper = _
+  var Hand: TextureWrapper = _
+  var Fingerer: TextureWrapper = _
   var Circle: TextureWrapper = _
 
   def mobile: Boolean = isMobile(Gdx.app.getType)
