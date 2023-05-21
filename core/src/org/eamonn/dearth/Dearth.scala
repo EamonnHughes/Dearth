@@ -113,19 +113,20 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     Text.mediumFont.setColor(Color.BLACK)
     Text.mediumFont.draw(batch, "HELLO", 0f,  Gdx.graphics.getHeight)
 
-    batch.setColor(Color.GREEN)
-    batch.draw(Square, (5) * screenUnit, (5) * screenUnit, screenUnit, screenUnit)
-    batch.setColor(Color.WHITE)
+
 
     for(x <- player.position.x.round - 5 to player.position.x.round + 5){
-      for(y <- player.position.y.round - 5 to player.position.y.round + 5) {
+      for(y <- player.position.z.round - 5 to player.position.z.round + 5) {
         if(wallLocs.exists(wall => wall.x == x && wall.y ==y)){
           batch.setColor(Color.RED)
-          batch.draw(Square, (5+x)*screenUnit, (5+y)*screenUnit, screenUnit, screenUnit)
+          batch.draw(Square,  (5+x-player.position.x)*screenUnit, (5+y-player.position.z)*screenUnit, screenUnit, screenUnit)
           batch.setColor(Color.WHITE)
         }
       }
       }
+    batch.setColor(Color.GREEN)
+    batch.draw(Square, (4.75f) * screenUnit, (4.75f) * screenUnit, .5f*screenUnit, .5f*screenUnit)
+    batch.setColor(Color.WHITE)
     if(isMiddleFinger){
       batch.draw(MiddleFinger, Gdx.graphics.getWidth/8, 0f, Gdx.graphics.getWidth/4, Gdx.graphics.getWidth/4)
     } else {
