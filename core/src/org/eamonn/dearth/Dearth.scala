@@ -63,6 +63,7 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   var modelBuilder: ModelBuilder = _
   var isMiddleFinger = false
   var box: Model = _
+  var floor: Model = _
   var modelInstance: ModelInstance = _
   var switchedFinger = false
   var environment: Environment = _
@@ -80,6 +81,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     modelBuilder =new ModelBuilder()
     box = modelBuilder.createBox(1f, 2f, 1f,
       new Material(TextureAttribute.createDiffuse(TextureWrapper.load("WallTexture.png"))),
+      VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates    )
+    floor = modelBuilder.createBox(2000f, 1f, 2000f,
+      new Material(TextureAttribute.createDiffuse(TextureWrapper.load("Square.png"))),
       VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates    )
     modelInstance = new ModelInstance(box, 0, 0, 0)
     environment = new Environment()
@@ -104,7 +108,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     wallLocs.foreach(wall => {
 
     modelBatch.render(new ModelInstance(box, wall.x, 0, wall.y) , environment)
-  })
+      modelBatch.render(new ModelInstance(floor, 0, -1.5f, 0) , environment)
+
+    })
     modelBatch.end()
     batch.begin()
     batch.draw(Square, 0f, 0f, Gdx.graphics.getWidth/8, Gdx.graphics.getWidth/2)
@@ -125,7 +131,7 @@ class Dearth extends ApplicationAdapter with InputProcessor {
       }
       }
     batch.setColor(Color.GREEN)
-    batch.draw(Square, (4.75f) * screenUnit, (4.75f) * screenUnit, .5f*screenUnit, .5f*screenUnit)
+    batch.draw(Square, (4.75f) * screenUnit, (4.75f) * screenUnit, .3f*screenUnit, .3f*screenUnit)
     batch.setColor(Color.WHITE)
     if(isMiddleFinger){
       batch.draw(MiddleFinger, Gdx.graphics.getWidth/8, 0f, Gdx.graphics.getWidth/4, Gdx.graphics.getWidth/4)
@@ -163,30 +169,31 @@ class Dearth extends ApplicationAdapter with InputProcessor {
 
     var posPos = player.position.cpy().mulAdd(camera.direction, lZ).mulAdd(sideways, lX)
     wallLocs.foreach(wall => {
-      if(player.position.z > wall.y && player.position.z <= wall.y + 1) {
-        if (posPos.x > wall.x && posPos.x <= wall.x + 1) {
-          if (player.position.x < wall.x) {
-            posPos.x = wall.x - .01f
-          } else if (player.position.x >= wall.x + 1) {
-            posPos.x = wall.x + 1.01f
+      if(player.position.z + (player.size.z/2) >= wall.y && player.position.z - (player.size.z/2) <= wall.y + 1) {
+        if (posPos.x + (player.size.x/2) >= wall.x && posPos.x - (player.size.x/2) <= wall.x + 1) {
+          if (player.position.x + (player.size.x/2) <= wall.x) {
+            posPos.x = wall.x - (player.size.x/2)
+          } else if (player.position.x - (player.size.x/2) >= wall.x + 1) {
+            posPos.x = wall.x + 1 + (player.size.x/2)
           }
         }
 
 
       }
-      if(player.position.x > wall.x && player.position.x <= wall.x + 1) {
-        if(posPos.z > wall.y && posPos.z <= wall.y + 1) {
-        if (player.position.z < wall.y) {
-          posPos.z = wall.y - .01f
-        } else if (player.position.z >= wall.y + 1) {
-          posPos.z = wall.y + 1.01f
+      if(player.position.x + (player.size.x/2) >= wall.x && player.position.x - (player.size.x/2) <= wall.x + 1) {
+        if(posPos.z + (player.size.z/2) >= wall.y && posPos.z - (player.size.z/2) <= wall.y + 1) {
+        if (player.position.z + (player.size.z/2) <= wall.y) {
+          posPos.z = wall.y - (player.size.z/2)
+        } else if (player.position.z - (player.size.z/2) >= wall.y + 1) {
+          posPos.z = wall.y + 1 + (player.size.z/2)
         }
       }}
     })
     player.position.set(posPos)
 
-
-    camera.position.set(player.position)
+val xx = player.position.cpy()
+    xx.sub(.5f,0, .5f)
+    camera.position.set(xx)
   }
 
   override def dispose(): Unit = {
