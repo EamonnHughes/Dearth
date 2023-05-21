@@ -15,7 +15,7 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.math.{Matrix4, Vector2, Vector3}
 import com.badlogic.gdx.utils.ScreenUtils
 import com.badlogic.gdx.{ApplicationAdapter, Gdx, Input, InputProcessor}
-import org.eamonn.dearth.Dearth.{Fingerer, Hand, Square, Weapon}
+import org.eamonn.dearth.Dearth.{MiddleFinger, Hand, Square, Weapon}
 import org.eamonn.dearth.scenes.Home
 import org.eamonn.dearth.util.{GarbageCan, TextureWrapper}
 
@@ -26,11 +26,11 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   private var batch: PolygonSpriteBatch = _
   private var scene: Scene = _
   var keysPressed: List[Int] = List.empty
+  var player = Player()
   var lX = 0f
   var lY = 0f
   var lZ = 0f
   var mx = 0
-  var my = 0
   var wallLocs = List[Vec2](Vec2(0, 0), Vec2(1, 0)
     , Vec2(3, 0)
     , Vec2(4, 0)
@@ -89,9 +89,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     Dearth.Weapon = TextureWrapper.load("Dagger.png")
     Dearth.Square = TextureWrapper.load("Square.png")
     Dearth.Hand = TextureWrapper.load("fingerless.png")
-    Dearth.Fingerer = TextureWrapper.load("hand.png")
+    Dearth.MiddleFinger = TextureWrapper.load("hand.png")
     //    Dearth.sound = Dearth.loadSound("triangle.mp3")
-    //Text.loadFonts()
+    Text.loadFonts()
   }
 
   override def render(): Unit = {
@@ -100,19 +100,34 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT|GL20.GL_DEPTH_BUFFER_BIT)
     update()
     camera.update()
-    modelInstance = new ModelInstance(box, lX, lY, lZ)
     modelBatch.begin(camera)
     wallLocs.foreach(wall => {
 
-    modelBatch.render(new ModelInstance(box, wall.x, lY, wall.y) , environment)
+    modelBatch.render(new ModelInstance(box, wall.x, 0, wall.y) , environment)
   })
     modelBatch.end()
     batch.begin()
     batch.draw(Square, 0f, 0f, Gdx.graphics.getWidth/8, Gdx.graphics.getWidth/2)
     batch.draw(Weapon, Gdx.graphics.getWidth*5/8, 0f, Gdx.graphics.getWidth/4, Gdx.graphics.getWidth/2)
     batch.draw(Square, Gdx.graphics.getWidth*7/8, 0f, Gdx.graphics.getWidth/8, Gdx.graphics.getWidth/2)
+    Text.mediumFont.setColor(Color.BLACK)
+    Text.mediumFont.draw(batch, "HELLO", 0f,  Gdx.graphics.getHeight)
+
+    batch.setColor(Color.GREEN)
+    batch.draw(Square, (5) * screenUnit, (5) * screenUnit, screenUnit, screenUnit)
+    batch.setColor(Color.WHITE)
+
+    for(x <- player.position.x.round - 5 to player.position.x.round + 5){
+      for(y <- player.position.y.round - 5 to player.position.y.round + 5) {
+        if(wallLocs.exists(wall => wall.x == x && wall.y ==y)){
+          batch.setColor(Color.RED)
+          batch.draw(Square, (5+x)*screenUnit, (5+y)*screenUnit, screenUnit, screenUnit)
+          batch.setColor(Color.WHITE)
+        }
+      }
+      }
     if(isMiddleFinger){
-      batch.draw(Fingerer, Gdx.graphics.getWidth/8, 0f, Gdx.graphics.getWidth/4, Gdx.graphics.getWidth/4)
+      batch.draw(MiddleFinger, Gdx.graphics.getWidth/8, 0f, Gdx.graphics.getWidth/4, Gdx.graphics.getWidth/4)
     } else {
       batch.draw(Hand, Gdx.graphics.getWidth/ 8, 0f, Gdx.graphics.getWidth / 4, Gdx.graphics.getWidth / 4)
     }
@@ -145,9 +160,32 @@ class Dearth extends ApplicationAdapter with InputProcessor {
       lX = 0f
     }
 
-    camera.position.mulAdd(camera.direction, lZ)
-    camera.position.set(camera.position.x, 0, camera.position.z)
-    camera.position.mulAdd(sideways, lX)
+    var posPos = player.position.cpy().mulAdd(camera.direction, lZ).mulAdd(sideways, lX)
+    wallLocs.foreach(wall => {
+      if(player.position.z > wall.y && player.position.z <= wall.y + 1) {
+        if (posPos.x > wall.x && posPos.x <= wall.x + 1) {
+          if (player.position.x < wall.x) {
+            posPos.x = wall.x - .01f
+          } else if (player.position.x >= wall.x + 1) {
+            posPos.x = wall.x + 1.01f
+          }
+        }
+
+
+      }
+      if(player.position.x > wall.x && player.position.x <= wall.x + 1) {
+        if(posPos.z > wall.y && posPos.z <= wall.y + 1) {
+        if (player.position.z < wall.y) {
+          posPos.z = wall.y - .01f
+        } else if (player.position.z >= wall.y + 1) {
+          posPos.z = wall.y + 1.01f
+        }
+      }}
+    })
+    player.position.set(posPos)
+
+
+    camera.position.set(player.position)
   }
 
   override def dispose(): Unit = {
@@ -200,7 +238,7 @@ object Dearth {
   var Square: TextureWrapper = _
   var Weapon: TextureWrapper = _
   var Hand: TextureWrapper = _
-  var Fingerer: TextureWrapper = _
+  var MiddleFinger: TextureWrapper = _
   var Circle: TextureWrapper = _
 
   def mobile: Boolean = isMobile(Gdx.app.getType)
