@@ -2,8 +2,8 @@ package org.eamonn.dearth
 
 import com.badlogic.gdx.Application.ApplicationType
 import com.badlogic.gdx.Input.Keys
-import  com.badlogic.gdx.Gdx
-import com.badlogic.gdx.physics.box2d.World
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.physics.box2d.{Body, World}
 import com.badlogic.gdx.assets.loaders.AssetLoader
 import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.Cursor.SystemCursor
@@ -14,10 +14,10 @@ import com.badlogic.gdx.graphics.g3d.attributes.{ColorAttribute, TextureAttribut
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
 import com.badlogic.gdx.graphics.g3d.{Environment, Material, Model, ModelBatch, ModelInstance}
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
-import com.badlogic.gdx.math.{Matrix4, Vector2, Vector3}
+import com.badlogic.gdx.math.{Matrix3, Matrix4, Vector2, Vector3}
 import com.badlogic.gdx.utils.ScreenUtils
 import com.badlogic.gdx.{ApplicationAdapter, Gdx, Input, InputProcessor}
-import org.eamonn.dearth.Dearth.{MiddleFinger, Hand, Square, Weapon}
+import org.eamonn.dearth.Dearth.{Hand, MiddleFinger, Square, Weapon}
 import org.eamonn.dearth.scenes.Home
 import org.eamonn.dearth.util.{GarbageCan, TextureWrapper}
 
@@ -28,7 +28,6 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   private var batch: PolygonSpriteBatch = _
   private var scene: Scene = _
   var keysPressed: List[Int] = List.empty
-  var player = Player()
   var lX = 0f
   var lY = 0f
   var lZ = 0f
@@ -69,6 +68,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   var modelInstance: ModelInstance = _
   var switchedFinger = false
   var environment: Environment = _
+  var world: World = _
+  var player: Player = _
+  var bodyd: Body = _
 
 
   override def create(): Unit = {
@@ -91,20 +93,26 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     environment = new Environment()
     environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f))
     environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f))
+    world = new World(new Vector2(0, -10f), true)
     Gdx.input.setInputProcessor(this)
     Dearth.Weapon = TextureWrapper.load("Dagger.png")
     Dearth.Square = TextureWrapper.load("Square.png")
     Dearth.Hand = TextureWrapper.load("fingerless.png")
     Dearth.MiddleFinger = TextureWrapper.load("hand.png")
+    player = Player(new Vector3(2, 0, 2))
+    bodyd = world.createBody(player.bodyDef)
+    bodyd.createFixture(player.shape, 0f)
+    bodyd.setGravityScale(0)
     //    Dearth.sound = Dearth.loadSound("triangle.mp3")
     Text.loadFonts()
   }
+
 
   override def render(): Unit = {
     Gdx.input.setCursorCatched(true)
     Gdx.gl.glClearColor(0, 0, 0, 1)
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT|GL20.GL_DEPTH_BUFFER_BIT)
-    update()
+    update(Gdx.graphics.getDeltaTime)
     camera.update()
     modelBatch.begin(camera)
     wallLocs.foreach(wall => {
@@ -144,11 +152,11 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     batch.end()
   }
 
-  def update(): Unit = {
+  def update(delta: Float): Unit = {
     if (keysPressed.contains(Keys.W)) {
-      lZ = .1f
+      lZ = 7f
     } else if (keysPressed.contains(Keys.S)) {
-      lZ = -.1f
+      lZ = -7f
     } else {
       lZ = 0f
     }
@@ -163,38 +171,19 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     var sideways = camera.direction.cpy()
     sideways.rotate(Vector3.Y, 90f)
     if (keysPressed.contains(Keys.A)) {
-      lX = .1f
+      lX = 7f
     } else if (keysPressed.contains(Keys.D)) {
-      lX = -.1f
+      lX = -7f
     } else {
       lX = 0f
     }
+    var vel = new Vector3(lX, 0, lZ)
 
-    var posPos = player.position.cpy().mulAdd(camera.direction, lZ).mulAdd(sideways, lX)
-    wallLocs.foreach(wall => {
-      if(player.position.z + (player.size.z/2) >= wall.y && player.position.z - (player.size.z/2) <= wall.y + 1) {
-        if (posPos.x + (player.size.x/2) >= wall.x && posPos.x - (player.size.x/2) <= wall.x + 1) {
-          if (player.position.x + (player.size.x/2) <= wall.x) {
-            posPos.x = wall.x - (player.size.x/2)
-          } else if (player.position.x - (player.size.x/2) >= wall.x + 1) {
-            posPos.x = wall.x + 1 + (player.size.x/2)
-          }
-        }
+    bodyd.setLinearVelocity(vel.x, vel.z)
+    player.position.set(bodyd.getPosition.x, 0, bodyd.getPosition.y)
+    world.step(delta, 3, 3)
 
-
-      }
-      if(player.position.x + (player.size.x/2) >= wall.x && player.position.x - (player.size.x/2) <= wall.x + 1) {
-        if(posPos.z + (player.size.z/2) >= wall.y && posPos.z - (player.size.z/2) <= wall.y + 1) {
-        if (player.position.z + (player.size.z/2) <= wall.y) {
-          posPos.z = wall.y - (player.size.z/2)
-        } else if (player.position.z - (player.size.z/2) >= wall.y + 1) {
-          posPos.z = wall.y + 1 + (player.size.z/2)
-        }
-      }}
-    })
-    player.position.set(posPos)
-
-val xx = player.position.cpy()
+    val xx = player.position.cpy()
     xx.sub(.5f,0, .5f)
     camera.position.set(xx)
   }
