@@ -14,7 +14,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.{ColorAttribute, TextureAttribut
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
 import com.badlogic.gdx.graphics.g3d.{Environment, Material, Model, ModelBatch, ModelInstance}
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
-import com.badlogic.gdx.math.{Matrix3, Matrix4, Vector2, Vector3}
+import com.badlogic.gdx.math.{Matrix4, Vector2, Vector3}
 import com.badlogic.gdx.utils.ScreenUtils
 import com.badlogic.gdx.{ApplicationAdapter, Gdx, Input, InputProcessor}
 import org.eamonn.dearth.Dearth.{Hand, MiddleFinger, Square, Weapon}
@@ -177,9 +177,12 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     } else {
       lX = 0f
     }
-    var vel = new Vector3(lX, 0, lZ)
+    val forwards = camera.direction.cpy()
+    forwards.scl(lZ)
+    sideways.scl(lX)
+    forwards.add(sideways)
 
-    bodyd.setLinearVelocity(vel.x, vel.z)
+    bodyd.setLinearVelocity(forwards.x, forwards.z)
     player.position.set(bodyd.getPosition.x, 0, bodyd.getPosition.y)
     world.step(delta, 3, 3)
 
