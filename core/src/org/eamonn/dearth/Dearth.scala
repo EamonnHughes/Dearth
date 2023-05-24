@@ -184,7 +184,7 @@ class Dearth extends ApplicationAdapter with InputProcessor {
         camOffsetY = Math.sin(standardAnimateMiniFrame).toFloat/10
       } else {
         standardAnimateMiniFrame += 0.2f
-        camOffsetY = Math.sin(standardAnimateMiniFrame).toFloat/30
+        camOffsetY = Math.sin(standardAnimateMiniFrame).toFloat/45
       }
     }
     if(standardAnimateTick >= 0.2f){
@@ -204,9 +204,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     }
 
     if (keysPressed.contains(Keys.W)) {
-      lZ = 7f
+      lZ = 6f
     } else if (keysPressed.contains(Keys.S)) {
-      lZ = -7f
+      lZ = -5f
     } else {
       lZ = 0f
     }
@@ -221,9 +221,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     var sideways = camera.direction.cpy()
     sideways.rotate(Vector3.Y, 90f)
     if (keysPressed.contains(Keys.A)) {
-      lX = 7f
+      lX = 5f
     } else if (keysPressed.contains(Keys.D)) {
-      lX = -7f
+      lX = -5f
     } else {
       lX = 0f
     }
