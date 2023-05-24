@@ -29,12 +29,23 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   private var scene: Scene = _
   var keysPressed: List[Int] = List.empty
   var lX = 0f
+  var camOffsetY = 0f
   var lY = 0f
   var lZ = 0f
   var mx = 0
   var standardAnimateTick = 0f
   var standardAnimateFrame = 0
-  var wallLocs = List[Vec2](Vec2(0, 0), Vec2(1, 0), Vec2(2, 0))
+  var standardAnimateMiniFrame = 0f
+  var wallLocs = List[Vec2](Vec2(0, 0), Vec2(1, 0), Vec2(2, 0)
+    , Vec2(3, 0)
+    , Vec2(4, 0)
+    , Vec2(5, 0)
+    , Vec2(6, 0)
+    , Vec2(6, 1)
+    , Vec2(6, 2)
+    , Vec2(6, 3)
+    , Vec2(6, 4)
+    , Vec2(6, 5))
   val texCoords: Array[Float] =
     Array(
       0.0f, 0.0f,
@@ -65,9 +76,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     "hand3.png"
   )
   var rAnimationList: List[String] = List(
-    "dagger1.png",
+    "dagger3.png",
 "dagger2.png",
-"dagger3.png"
+"dagger1.png"
   )
 
   override def create(): Unit = {
@@ -167,19 +178,25 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   def update(delta: Float): Unit = {
 
     standardAnimateTick += delta
-    if(standardAnimateTick >= 0.2) {
+    if(standardAnimateTick >= 0.1) {
       if (walking) {
-        Weapon = TextureWrapper.load(rAnimationList(standardAnimateFrame))
+        standardAnimateMiniFrame += 0.4f
+        camOffsetY = Math.sin(standardAnimateMiniFrame).toFloat/10
       } else {
-        Weapon = TextureWrapper.load(rAnimationList(0))
+        standardAnimateMiniFrame += 0.2f
+        camOffsetY = Math.sin(standardAnimateMiniFrame).toFloat/30
       }
+    }
+    if(standardAnimateTick >= 0.2f){
       if (walking) {
-        Hand = TextureWrapper.load(lAnimationList(standardAnimateFrame))
+        Weapon = TextureWrapper.load(rAnimationList(standardAnimateFrame min (rAnimationList.length - 1)))
+        Hand = TextureWrapper.load(lAnimationList(standardAnimateFrame min (lAnimationList.length - 1)))
       } else {
-        Hand = TextureWrapper.load(lAnimationList(0))
+        Weapon = TextureWrapper.load(rAnimationList.head)
+        Hand = TextureWrapper.load(lAnimationList.head)
       }
       standardAnimateTick = 0
-      if(standardAnimateFrame < rAnimationList.length - 1) {
+      if (standardAnimateFrame < lAnimationList.length - 1) {
         standardAnimateFrame += 1
       } else {
         standardAnimateFrame = 0
@@ -221,7 +238,7 @@ class Dearth extends ApplicationAdapter with InputProcessor {
 
     val xx = player.position.cpy()
     xx.sub(.5f,0, .5f)
-    camera.position.set(xx)
+    camera.position.set(new Vector3(xx.x, xx.y + camOffsetY, xx.z))
     if(lX != 0 || lZ != 0){
       walking = true
     } else {
