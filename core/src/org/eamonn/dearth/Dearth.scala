@@ -32,6 +32,8 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   var lY = 0f
   var lZ = 0f
   var mx = 0
+  var standardAnimateTick = 0f
+  var standardAnimateFrame = 0
   var wallLocs = List[Vec2](Vec2(0, 0), Vec2(1, 0), Vec2(2, 0))
   val texCoords: Array[Float] =
     Array(
@@ -55,7 +57,18 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   var bodyd: Body = _
   var walls: List[Body] = List.empty
   var shape: PolygonShape = _
+  var walking = false
 
+  var lAnimationList: List[String] = List(
+    "hand1.png",
+    "hand2.png",
+    "hand3.png"
+  )
+  var rAnimationList: List[String] = List(
+    "dagger1.png",
+"dagger2.png",
+"dagger3.png"
+  )
 
   override def create(): Unit = {
     Gdx.input.setCatchKey(Input.Keys.BACK, true)
@@ -128,8 +141,6 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     batch.draw(Square, 0f, 0f, Gdx.graphics.getWidth/8, Gdx.graphics.getWidth/2)
     batch.draw(Weapon, Gdx.graphics.getWidth*5/8, 0f, Gdx.graphics.getWidth/4, Gdx.graphics.getWidth/2)
     batch.draw(Square, Gdx.graphics.getWidth*7/8, 0f, Gdx.graphics.getWidth/8, Gdx.graphics.getWidth/2)
-    Text.mediumFont.setColor(Color.BLACK)
-    Text.mediumFont.draw(batch, "HELLO", 0f,  Gdx.graphics.getHeight)
 
 
 
@@ -154,6 +165,27 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   }
 
   def update(delta: Float): Unit = {
+
+    standardAnimateTick += delta
+    if(standardAnimateTick >= 0.2) {
+      if (walking) {
+        Weapon = TextureWrapper.load(rAnimationList(standardAnimateFrame))
+      } else {
+        Weapon = TextureWrapper.load(rAnimationList(0))
+      }
+      if (walking) {
+        Hand = TextureWrapper.load(lAnimationList(standardAnimateFrame))
+      } else {
+        Hand = TextureWrapper.load(lAnimationList(0))
+      }
+      standardAnimateTick = 0
+      if(standardAnimateFrame < rAnimationList.length - 1) {
+        standardAnimateFrame += 1
+      } else {
+        standardAnimateFrame = 0
+      }
+    }
+
     if (keysPressed.contains(Keys.W)) {
       lZ = 7f
     } else if (keysPressed.contains(Keys.S)) {
@@ -190,6 +222,11 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     val xx = player.position.cpy()
     xx.sub(.5f,0, .5f)
     camera.position.set(xx)
+    if(lX != 0 || lZ != 0){
+      walking = true
+    } else {
+      walking = false
+    }
   }
 
   override def dispose(): Unit = {
