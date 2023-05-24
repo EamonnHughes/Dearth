@@ -3,7 +3,7 @@ package org.eamonn.dearth
 import com.badlogic.gdx.Application.ApplicationType
 import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.physics.box2d.{Body, World}
+import com.badlogic.gdx.physics.box2d.{Body, BodyDef, PolygonShape, World}
 import com.badlogic.gdx.assets.loaders.AssetLoader
 import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.Cursor.SystemCursor
@@ -32,25 +32,7 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   var lY = 0f
   var lZ = 0f
   var mx = 0
-  var wallLocs = List[Vec2](Vec2(0, 0), Vec2(1, 0)
-    , Vec2(3, 0)
-    , Vec2(4, 0)
-    , Vec2(4, 1)
-    , Vec2(4, 2)
-    , Vec2(4, 3)
-    , Vec2(4, 4)
-    , Vec2(4, 5)
-    , Vec2(1, 5)
-    , Vec2(0, 5)
-    , Vec2(-1, 5)
-    , Vec2(-1, 4)
-    , Vec2(-1, 3)
-    , Vec2(-1, 2)
-    , Vec2(-1, 1)
-    , Vec2(-1, 0)
-    , Vec2(2, 5)
-    , Vec2(3, 5)
-  )
+  var wallLocs = List[Vec2](Vec2(0, 0), Vec2(1, 0), Vec2(2, 0))
   val texCoords: Array[Float] =
     Array(
       0.0f, 0.0f,
@@ -71,6 +53,8 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   var world: World = _
   var player: Player = _
   var bodyd: Body = _
+  var walls: List[Body] = List.empty
+  var shape: PolygonShape = _
 
 
   override def create(): Unit = {
@@ -100,9 +84,23 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     Dearth.Hand = TextureWrapper.load("fingerless.png")
     Dearth.MiddleFinger = TextureWrapper.load("hand.png")
     player = Player(new Vector3(2, 0, 2))
+    shape = new PolygonShape()
+    shape.setAsBox(0.5f, 0.5f)
+
     bodyd = world.createBody(player.bodyDef)
     bodyd.createFixture(player.shape, 0f)
     bodyd.setGravityScale(0)
+    wallLocs.foreach(wall => {
+      var bodyDef = new BodyDef()
+      bodyDef.`type` = BodyDef.BodyType.StaticBody
+      bodyDef.position.set(wall.x, wall.y)
+      walls = world.createBody(bodyDef):: walls
+    })
+    walls.foreach(wall => {
+
+      wall.createFixture(shape, 0f)
+      wall.setGravityScale(0)
+    })
     //    Dearth.sound = Dearth.loadSound("triangle.mp3")
     Text.loadFonts()
   }
@@ -115,9 +113,12 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     update(Gdx.graphics.getDeltaTime)
     camera.update()
     modelBatch.begin(camera)
-    wallLocs.foreach(wall => {
+    walls.foreach(wall => {
+      var mBuilder = modelBuilder.createBox(1, 4f, 1f,
+        new Material(TextureAttribute.createDiffuse(TextureWrapper.load("WallTexture.png"))),
+        VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates)
 
-    modelBatch.render(new ModelInstance(box, wall.x, 0, wall.y) , environment)
+    modelBatch.render(new ModelInstance(mBuilder, wall.getPosition.x - 0.5f, 0, wall.getPosition.y - 0.5f) , environment)
     })
         modelBatch.render(new ModelInstance(floor, player.position.x, -1.5f, player.position.z), environment)
         modelBatch.render(new ModelInstance(floor, player.position.x, 1.5f, player.position.z), environment)
@@ -134,9 +135,9 @@ class Dearth extends ApplicationAdapter with InputProcessor {
 
     for(x <- player.position.x.round - 5 to player.position.x.round + 5){
       for(y <- player.position.z.round - 5 to player.position.z.round + 5) {
-        if(wallLocs.exists(wall => wall.x == x && wall.y ==y)){
+        if(walls.exists(wall => wall.getPosition.x == x && wall.getPosition.y ==y)){
           batch.setColor(Color.RED)
-          batch.draw(Square,  (5+x-player.position.x)*screenUnit, (5+y-player.position.z)*screenUnit, screenUnit, screenUnit)
+          batch.draw(Square,  (5+x-0.5f -player.position.x)*screenUnit, (5-0.5f+y-player.position.z)*screenUnit, screenUnit, screenUnit)
           batch.setColor(Color.WHITE)
         }
       }

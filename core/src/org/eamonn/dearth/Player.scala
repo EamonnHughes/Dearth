@@ -9,7 +9,7 @@ case class Player (var position: Vector3 = new Vector3(0, 0, 0)) {
   bodyDef.`type` = BodyDef.BodyType.DynamicBody
   bodyDef.position.set(position.x, position.z)
   var shape = new PolygonShape()
-  shape.setAsBox(size.x, size.z)
+  shape.setAsBox(size.x/2, size.z/2)
   var fixtureDef = new FixtureDef()
   fixtureDef.shape = shape
   fixtureDef.density = 1f
