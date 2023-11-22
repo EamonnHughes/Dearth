@@ -1,4 +1,3 @@
 # Dearth
 
-A [libgdx](https://libgdx.com/) game written in [Scala](https://www.scala-lang.org/),
-the premier programming language for contemporary mobile and game development.
+A totally sick (and rad) retro shooter. It continues the legacy of Doom, except without multiple levels. or any enemies. or usable weapons. A genre-defining minimalist take on the retro shooter.
