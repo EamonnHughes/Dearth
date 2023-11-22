@@ -36,16 +36,28 @@ class Dearth extends ApplicationAdapter with InputProcessor {
   var standardAnimateTick = 0f
   var standardAnimateFrame = 0
   var standardAnimateMiniFrame = 0f
-  var wallLocs = List[Vec2](Vec2(0, 0), Vec2(1, 0), Vec2(2, 0)
-    , Vec2(3, 0)
-    , Vec2(4, 0)
-    , Vec2(5, 0)
-    , Vec2(6, 0)
-    , Vec2(6, 1)
-    , Vec2(6, 2)
-    , Vec2(6, 3)
-    , Vec2(6, 4)
-    , Vec2(6, 5))
+
+  var lev01 = Level(
+    """wwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+      |wwwwwwwwwwwwwwwwwwww   wwwwwww
+      |wwwwwwwwwwwwwwwwww       wwwww
+      |w       w     www         wwww
+      |w     w w     ww           www
+      |w     w ww w ww             ww
+      |www www    w ww             ww
+      |www www wwww w               w
+      |ww   ww                      w
+      |w     w wwwwww               w
+      |w     w wwwwwww             ww
+      |w       wwwwwww             ww
+      |wwwwwwwwwwwwwwww           www
+      |www    wwwwwwwwww         wwww
+      |www                      wwwww
+      |www    wwwwwwwwwwwww   wwwwwww
+      |wwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+      |""".stripMargin)
+
+  var wallLocs = lev01.toWallLocs
   val texCoords: Array[Float] =
     Array(
       0.0f, 0.0f,
@@ -152,18 +164,6 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     batch.draw(Square, 0f, 0f, Gdx.graphics.getWidth/8, Gdx.graphics.getWidth/2)
     batch.draw(Weapon, Gdx.graphics.getWidth*5/8, 0f, Gdx.graphics.getWidth/4, Gdx.graphics.getWidth/2)
     batch.draw(Square, Gdx.graphics.getWidth*7/8, 0f, Gdx.graphics.getWidth/8, Gdx.graphics.getWidth/2)
-
-
-
-    for(x <- player.position.x.round - 5 to player.position.x.round + 5){
-      for(y <- player.position.z.round - 5 to player.position.z.round + 5) {
-        if(walls.exists(wall => wall.getPosition.x == x && wall.getPosition.y ==y)){
-          batch.setColor(Color.RED)
-          batch.draw(Square,  (5+x-0.5f -player.position.x)*screenUnit, (5-0.5f+y-player.position.z)*screenUnit, screenUnit, screenUnit)
-          batch.setColor(Color.WHITE)
-        }
-      }
-      }
     batch.setColor(Color.GREEN)
     batch.draw(Square, (4.85f) * screenUnit, (4.85f) * screenUnit, .3f*screenUnit, .3f*screenUnit)
     batch.setColor(Color.WHITE)
@@ -210,6 +210,7 @@ class Dearth extends ApplicationAdapter with InputProcessor {
     } else {
       lZ = 0f
     }
+    if(keysPressed.contains(Keys.Q) && keysPressed.contains(Keys.CONTROL_LEFT)) System.exit(0)
 
     if(keysPressed.contains(Keys.Q) && !switchedFinger){
       isMiddleFinger = !isMiddleFinger
